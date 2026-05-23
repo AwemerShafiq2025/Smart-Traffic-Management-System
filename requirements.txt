@@ -43,3 +43,4 @@ pytest-asyncio==0.24.0         # Async test support for FastAPI async routes
 # ── Linting / Type-checking (dev only – not needed at runtime) ────────────────
 flake8==7.1.1
 mypy==1.13.0
+mysql-connector-python
