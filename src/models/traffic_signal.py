@@ -26,4 +26,3 @@ class TrafficSignal:
             raise ValueError("timer must be >= 0")
         self.state = state
         self.timer = timer
-

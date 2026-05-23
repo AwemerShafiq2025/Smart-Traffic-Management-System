@@ -71,7 +71,8 @@ class DatabaseHandler:
                 return self._conn
             except MySQLError as exc:
                 self._conn = None
-                raise RuntimeError(f"Failed to connect to MySQL database '{self._config.database}'.") from exc
+                raise RuntimeError(
+                    f"Failed to connect to MySQL database '{self._config.database}'.") from exc
 
     def _execute_insert(self, query: str, params: Mapping[str, Any]) -> int:
         conn = self.connect()

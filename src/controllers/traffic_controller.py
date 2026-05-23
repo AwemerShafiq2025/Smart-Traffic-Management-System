@@ -230,8 +230,8 @@ class TrafficController:
         }
         if emergency_by_signal_id is not None:
             self._live_emergencies_by_signal_id = {
-                int(signal_id): bool(has_emer) 
-                for signal_id, has_emer in emergency_by_signal_id.items() 
+                int(signal_id): bool(has_emer)
+                for signal_id, has_emer in emergency_by_signal_id.items()
                 if int(signal_id) in signal_ids
             }
 
@@ -278,7 +278,8 @@ class TrafficController:
         # Active timer finished -> transition.
         if active.state == TrafficSignalState.GREEN:
             old = active.state
-            active.set_state(TrafficSignalState.YELLOW, int(self._durations[TrafficSignalState.YELLOW]))
+            active.set_state(TrafficSignalState.YELLOW, int(
+                self._durations[TrafficSignalState.YELLOW]))
             self._notify_signal_state_changed(
                 active,
                 old,
@@ -316,7 +317,8 @@ class TrafficController:
                     continue
                 if s.state != TrafficSignalState.RED:
                     prev = s.state
-                    s.set_state(TrafficSignalState.RED, int(self._durations[TrafficSignalState.RED]))
+                    s.set_state(TrafficSignalState.RED,
+                                int(self._durations[TrafficSignalState.RED]))
                     self._notify_signal_state_changed(
                         s, prev, s.state, details="Round-robin: locking non-active signal to RED."
                     )
@@ -340,13 +342,13 @@ class TrafficController:
                 # Dynamic GREEN allocation happens EXACTLY at the moment we transition into GREEN.
                 queue_count = self._get_live_queue_count(next_signal.id)
                 allocated_seconds = self._calculate_dynamic_green_time(next_signal.id)
-                
-                # Updated clean console log 
+
+                # Updated clean console log
                 print(
                     f"Live AI: Signal [{next_signal.id}] turning GREEN. Queue: [{queue_count}] cars. "
                     f"Allocating [{allocated_seconds}] seconds (Max 6s)."
                 )
-                
+
                 self._db.insert_traffic_log(
                     signal_id=next_signal.id,
                     event_type="AI_DECISION",

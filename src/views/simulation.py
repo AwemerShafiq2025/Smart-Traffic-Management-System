@@ -46,7 +46,8 @@ class TrafficSimulation:
 
     _TICK_EVENT: int = pygame.USEREVENT + 1
 
-    def __init__(self, controller: TrafficController, *, config: SimulationConfig | None = None) -> None:
+    def __init__(self, controller: TrafficController, *,
+                 config: SimulationConfig | None = None) -> None:
         self._controller = controller
         self._config = config or SimulationConfig()
 
@@ -171,7 +172,8 @@ class TrafficSimulation:
         # Top approach
         pygame.draw.line(self._screen, color, (cx - half, y_top), (cx + half, y_top), thickness)
         # Bottom approach
-        pygame.draw.line(self._screen, color, (cx - half, y_bottom), (cx + half, y_bottom), thickness)
+        pygame.draw.line(self._screen, color, (cx - half, y_bottom),
+                         (cx + half, y_bottom), thickness)
         # Left approach
         pygame.draw.line(self._screen, color, (x_left, cy - half), (x_left, cy + half), thickness)
         # Right approach
@@ -191,24 +193,30 @@ class TrafficSimulation:
         y = cy
         x = 0
         while x < w:
-            if x < cx - road_thickness//2 or x > cx + road_thickness//2:
-                pygame.draw.rect(self._screen, lane_color, pygame.Rect(x, y - lane_w // 2, dash_len, lane_w))
+            if x < cx - road_thickness // 2 or x > cx + road_thickness // 2:
+                pygame.draw.rect(
+                    self._screen, lane_color, pygame.Rect(
+                        x, y - lane_w // 2, dash_len, lane_w))
             x += dash_len + gap
 
         # Vertical dashed line
         x = cx
         y = 0
         while y < h:
-            if y < cy - road_thickness//2 or y > cy + road_thickness//2:
-                pygame.draw.rect(self._screen, lane_color, pygame.Rect(x - lane_w // 2, y, lane_w, dash_len))
+            if y < cy - road_thickness // 2 or y > cy + road_thickness // 2:
+                pygame.draw.rect(
+                    self._screen, lane_color, pygame.Rect(
+                        x - lane_w // 2, y, lane_w, dash_len))
             y += dash_len + gap
 
         # Outer Edge lane separators
         inset = road_thickness // 4
         edge_lane_w = 2
         for offset in (-inset, inset):
-            pygame.draw.line(self._screen, (120, 120, 120), (cx + offset, 0), (cx + offset, h), edge_lane_w)
-            pygame.draw.line(self._screen, (120, 120, 120), (0, cy + offset), (w, cy + offset), edge_lane_w)
+            pygame.draw.line(self._screen, (120, 120, 120),
+                             (cx + offset, 0), (cx + offset, h), edge_lane_w)
+            pygame.draw.line(self._screen, (120, 120, 120),
+                             (0, cy + offset), (w, cy + offset), edge_lane_w)
 
     def _draw_signals(self) -> None:
         """
@@ -245,13 +253,37 @@ class TrafficSimulation:
         display_timer4 = timer4 if state4 != TrafficSignalState.RED else active_timer
 
         # Top
-        self._draw_signal_light(x=cx + half + 30, y=y_top - 25, state=state1, timer=display_timer1, rotation_degrees=0, is_top=True)
+        self._draw_signal_light(
+            x=cx + half + 30,
+            y=y_top - 25,
+            state=state1,
+            timer=display_timer1,
+            rotation_degrees=0,
+            is_top=True)
         # Bottom
-        self._draw_signal_light(x=cx - half - 30, y=y_bottom + 25, state=state2, timer=display_timer2, rotation_degrees=0, is_top=False)
+        self._draw_signal_light(
+            x=cx - half - 30,
+            y=y_bottom + 25,
+            state=state2,
+            timer=display_timer2,
+            rotation_degrees=0,
+            is_top=False)
         # Left
-        self._draw_signal_light(x=x_left - 25, y=cy - half - 30, state=state3, timer=display_timer3, rotation_degrees=90, is_top=True)
+        self._draw_signal_light(
+            x=x_left - 25,
+            y=cy - half - 30,
+            state=state3,
+            timer=display_timer3,
+            rotation_degrees=90,
+            is_top=True)
         # Right
-        self._draw_signal_light(x=x_right + 25, y=cy + half + 30, state=state4, timer=display_timer4, rotation_degrees=90, is_top=False)
+        self._draw_signal_light(
+            x=x_right + 25,
+            y=cy + half + 30,
+            state=state4,
+            timer=display_timer4,
+            rotation_degrees=90,
+            is_top=False)
 
     def _analyze_traffic_and_apply_ai(self) -> None:
         """
@@ -279,7 +311,7 @@ class TrafficSimulation:
 
             # Detect approaching or waiting ambulances
             is_ambulance = getattr(v, "v_type", VehicleType.CAR) == VehicleType.AMBULANCE
-            
+
             approaching_or_waiting = False
             if v.direction == Direction.DOWN and f <= stop_line + 2:
                 approaching_or_waiting = True
@@ -302,8 +334,10 @@ class TrafficSimulation:
                 if v.speed == 0:
                     queued_by_signal_id[signal_id] += 1
 
-        print(f"[AI] Live queued vehicles: {queued_by_signal_id}, Emergencies: {emergency_by_signal_id}")
-        self._controller.apply_live_congestion_ai(queued_by_signal_id, emergency_by_signal_id=emergency_by_signal_id)
+        print(
+            f"[AI] Live queued vehicles: {queued_by_signal_id}, Emergencies: {emergency_by_signal_id}")
+        self._controller.apply_live_congestion_ai(
+            queued_by_signal_id, emergency_by_signal_id=emergency_by_signal_id)
 
     def _rand_spawn_delay_ms(self) -> int:
         return random.randint(self._config.vehicle_spawn_min_ms, self._config.vehicle_spawn_max_ms)
@@ -323,7 +357,7 @@ class TrafficSimulation:
         lane_offset = road_thickness // 4
 
         direction = random.choice([Direction.DOWN, Direction.UP, Direction.RIGHT, Direction.LEFT])
-        
+
         type_roll = random.random()
         if type_roll < 0.05:
             # Ambulance (Longer, fast)
@@ -352,7 +386,8 @@ class TrafficSimulation:
             length = 34
             thickness = 18
             speed = random.uniform(1.8, 2.6)
-            color = random.choice([(40, 170, 255), (255, 120, 40), (200, 200, 200), (180, 80, 255), (90, 220, 120)])
+            color = random.choice([(40, 170, 255), (255, 120, 40),
+                                  (200, 200, 200), (180, 80, 255), (90, 220, 120)])
 
         if direction == Direction.DOWN:
             x = cx - lane_offset - (thickness // 2)
@@ -405,11 +440,13 @@ class TrafficSimulation:
         )
 
         safe = max(self._config.vehicle_gap_px, self._config.vehicle_safe_buffer_px)
-        candidate_rect = pygame.Rect(int(candidate.x), int(candidate.y), candidate.width, candidate.height)
+        candidate_rect = pygame.Rect(int(candidate.x), int(
+            candidate.y), candidate.width, candidate.height)
         for other in self._vehicles:
             if other.direction != candidate.direction:
                 continue
-            other_rect = pygame.Rect(int(other.x), int(other.y), other.width, other.height).inflate(safe * 2, safe * 2)
+            other_rect = pygame.Rect(int(other.x), int(other.y), other.width,
+                                     other.height).inflate(safe * 2, safe * 2)
             if candidate_rect.colliderect(other_rect):
                 self._next_spawn_at_ms = now + random.randint(150, 300)
                 return
@@ -513,7 +550,7 @@ class TrafficSimulation:
                         v.direction = Direction.RIGHT if v.turn_intention == TurnIntention.RIGHT else Direction.LEFT
                     else:  # DOWN
                         v.direction = Direction.LEFT if v.turn_intention == TurnIntention.RIGHT else Direction.RIGHT
-                    
+
                     v.width, v.height = v.height, v.width
                     v.has_turned = True
             else:
@@ -523,7 +560,7 @@ class TrafficSimulation:
                         v.direction = Direction.DOWN if v.turn_intention == TurnIntention.RIGHT else Direction.UP
                     else:  # LEFT
                         v.direction = Direction.UP if v.turn_intention == TurnIntention.RIGHT else Direction.DOWN
-                    
+
                     v.width, v.height = v.height, v.width
                     v.has_turned = True
 
@@ -594,11 +631,11 @@ class TrafficSimulation:
         for v in self._vehicles:
             rect = pygame.Rect(int(v.x), int(v.y), v.width, v.height)
             pygame.draw.rect(self._screen, v.color, rect, border_radius=4)
-            
+
             glass_color = (20, 20, 30)
             headlight_color = (255, 255, 200)
             brake_light_color = (255, 30, 30)
-            
+
             v_type = getattr(v, "v_type", VehicleType.CAR)
             is_motorcycle = v_type == VehicleType.MOTORCYCLE
             is_ambulance = v_type == VehicleType.AMBULANCE
@@ -608,12 +645,12 @@ class TrafficSimulation:
                 siren_color_1 = (255, 0, 0)
                 siren_color_2 = (0, 0, 255)
                 siren_color = siren_color_1 if pygame.time.get_ticks() % 500 < 250 else siren_color_2
-                
+
                 if v.direction in (Direction.UP, Direction.DOWN):
                     siren_rect = (v.x + 2, v.y + v.height // 2 - 4, v.width - 4, 8)
                 else:
                     siren_rect = (v.x + v.width // 2 - 4, v.y + 2, 8, v.height - 4)
-                
+
                 pygame.draw.rect(self._screen, siren_color, siren_rect, border_radius=2)
 
             if not is_motorcycle:
@@ -622,43 +659,60 @@ class TrafficSimulation:
                     pygame.draw.rect(self._screen, headlight_color, (v.x + 2, v.y, 4, 4))
                     pygame.draw.rect(self._screen, headlight_color, (v.x + v.width - 6, v.y, 4, 4))
                     if v.speed == 0:
-                        pygame.draw.rect(self._screen, brake_light_color, (v.x + 2, v.y + v.height - 4, 6, 4))
-                        pygame.draw.rect(self._screen, brake_light_color, (v.x + v.width - 8, v.y + v.height - 4, 6, 4))
+                        pygame.draw.rect(self._screen, brake_light_color,
+                                         (v.x + 2, v.y + v.height - 4, 6, 4))
+                        pygame.draw.rect(self._screen, brake_light_color,
+                                         (v.x + v.width - 8, v.y + v.height - 4, 6, 4))
 
                 elif v.direction == Direction.DOWN:
-                    pygame.draw.rect(self._screen, glass_color, (v.x + 2, v.y + v.height - 14, v.width - 4, 8))
-                    pygame.draw.rect(self._screen, headlight_color, (v.x + 2, v.y + v.height - 4, 4, 4))
-                    pygame.draw.rect(self._screen, headlight_color, (v.x + v.width - 6, v.y + v.height - 4, 4, 4))
+                    pygame.draw.rect(
+                        self._screen, glass_color, (v.x + 2, v.y + v.height - 14, v.width - 4, 8))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x + 2, v.y + v.height - 4, 4, 4))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x + v.width - 6, v.y + v.height - 4, 4, 4))
                     if v.speed == 0:
                         pygame.draw.rect(self._screen, brake_light_color, (v.x + 2, v.y, 6, 4))
-                        pygame.draw.rect(self._screen, brake_light_color, (v.x + v.width - 8, v.y, 6, 4))
+                        pygame.draw.rect(self._screen, brake_light_color,
+                                         (v.x + v.width - 8, v.y, 6, 4))
 
                 elif v.direction == Direction.LEFT:
                     pygame.draw.rect(self._screen, glass_color, (v.x + 6, v.y + 2, 8, v.height - 4))
                     pygame.draw.rect(self._screen, headlight_color, (v.x, v.y + 2, 4, 4))
                     pygame.draw.rect(self._screen, headlight_color, (v.x, v.y + v.height - 6, 4, 4))
                     if v.speed == 0:
-                        pygame.draw.rect(self._screen, brake_light_color, (v.x + v.width - 4, v.y + 2, 4, 6))
-                        pygame.draw.rect(self._screen, brake_light_color, (v.x + v.width - 4, v.y + v.height - 8, 4, 6))
+                        pygame.draw.rect(self._screen, brake_light_color,
+                                         (v.x + v.width - 4, v.y + 2, 4, 6))
+                        pygame.draw.rect(self._screen, brake_light_color,
+                                         (v.x + v.width - 4, v.y + v.height - 8, 4, 6))
 
                 elif v.direction == Direction.RIGHT:
-                    pygame.draw.rect(self._screen, glass_color, (v.x + v.width - 14, v.y + 2, 8, v.height - 4))
-                    pygame.draw.rect(self._screen, headlight_color, (v.x + v.width - 4, v.y + 2, 4, 4))
-                    pygame.draw.rect(self._screen, headlight_color, (v.x + v.width - 4, v.y + v.height - 6, 4, 4))
+                    pygame.draw.rect(
+                        self._screen, glass_color, (v.x + v.width - 14, v.y + 2, 8, v.height - 4))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x + v.width - 4, v.y + 2, 4, 4))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x + v.width - 4, v.y + v.height - 6, 4, 4))
                     if v.speed == 0:
                         pygame.draw.rect(self._screen, brake_light_color, (v.x, v.y + 2, 4, 6))
-                        pygame.draw.rect(self._screen, brake_light_color, (v.x, v.y + v.height - 8, 4, 6))
+                        pygame.draw.rect(self._screen, brake_light_color,
+                                         (v.x, v.y + v.height - 8, 4, 6))
             else:
                 if v.direction == Direction.UP:
-                    pygame.draw.rect(self._screen, headlight_color, (v.x + v.width//2 - 2, v.y, 4, 4))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x + v.width // 2 - 2, v.y, 4, 4))
                 elif v.direction == Direction.DOWN:
-                    pygame.draw.rect(self._screen, headlight_color, (v.x + v.width//2 - 2, v.y + v.height - 4, 4, 4))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x + v.width // 2 - 2, v.y + v.height - 4, 4, 4))
                 elif v.direction == Direction.LEFT:
-                    pygame.draw.rect(self._screen, headlight_color, (v.x, v.y + v.height//2 - 2, 4, 4))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x, v.y + v.height // 2 - 2, 4, 4))
                 elif v.direction == Direction.RIGHT:
-                    pygame.draw.rect(self._screen, headlight_color, (v.x + v.width - 4, v.y + v.height//2 - 2, 4, 4))
+                    pygame.draw.rect(self._screen, headlight_color,
+                                     (v.x + v.width - 4, v.y + v.height // 2 - 2, 4, 4))
 
-    def _draw_signal_light(self, *, x: int, y: int, state: TrafficSignalState, timer: int, rotation_degrees: int = 0, is_top: bool = True) -> None:
+    def _draw_signal_light(self, *, x: int, y: int, state: TrafficSignalState,
+                           timer: int, rotation_degrees: int = 0, is_top: bool = True) -> None:
         box_w, box_h = 34, 92
         radius = 10
         padding = 8
@@ -671,19 +725,20 @@ class TrafficSimulation:
         pole_color = (60, 60, 60)
         if not horizontal:
             if is_top:
-                pygame.draw.rect(self._screen, pole_color, (x - 4, y + box_h//2, 8, 30))
+                pygame.draw.rect(self._screen, pole_color, (x - 4, y + box_h // 2, 8, 30))
             else:
-                pygame.draw.rect(self._screen, pole_color, (x - 4, y - box_h//2 - 30, 8, 30))
+                pygame.draw.rect(self._screen, pole_color, (x - 4, y - box_h // 2 - 30, 8, 30))
         else:
             if is_top:
-                pygame.draw.rect(self._screen, pole_color, (x + box_w//2, y - 4, 30, 8))
+                pygame.draw.rect(self._screen, pole_color, (x + box_w // 2, y - 4, 30, 8))
             else:
-                pygame.draw.rect(self._screen, pole_color, (x - box_w//2 - 30, y - 4, 30, 8))
+                pygame.draw.rect(self._screen, pole_color, (x - box_w // 2 - 30, y - 4, 30, 8))
 
         # Housing
         rect = pygame.Rect(x - box_w // 2, y - box_h // 2, box_w, box_h)
         pygame.draw.rect(self._screen, (20, 20, 20), rect, border_radius=6)
-        pygame.draw.rect(self._screen, (200, 180, 0), rect, width=2, border_radius=6) # Yellow border
+        pygame.draw.rect(self._screen, (200, 180, 0), rect,
+                         width=2, border_radius=6)  # Yellow border
 
         if not horizontal:
             centers = [
@@ -721,7 +776,7 @@ class TrafficSimulation:
             text_color = on[state][0] if state != TrafficSignalState.RED else on[TrafficSignalState.RED][0]
             text_surface = self._font.render(f"{timer:02d}", True, text_color)
             text_rect = text_surface.get_rect()
-            
+
             if not horizontal:
                 if is_top:
                     text_rect.midbottom = (x, rect.top - 8)
@@ -732,7 +787,7 @@ class TrafficSimulation:
                     text_rect.midright = (rect.left - 8, y)
                 else:
                     text_rect.midleft = (rect.right + 8, y)
-                
+
             bg_rect = text_rect.inflate(8, 4)
             pygame.draw.rect(self._screen, (10, 10, 10), bg_rect, border_radius=4)
             pygame.draw.rect(self._screen, (100, 100, 100), bg_rect, width=1, border_radius=4)
