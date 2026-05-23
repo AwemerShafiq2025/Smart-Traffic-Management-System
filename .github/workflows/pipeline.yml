@@ -1,0 +1,199 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Smart Traffic Management System – CI/CD Pipeline
+#
+# Triggers
+#   • Every push / PR to `main` or `develop`
+#   • Manual dispatch (workflow_dispatch)
+#
+# Stages
+#   1. lint   – code style & static type checking
+#   2. test   – pytest with a live MySQL test database
+#   3. build  – Docker image; pushed to GHCR on pushes to main
+# ─────────────────────────────────────────────────────────────────────────────
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+# Cancel a running workflow if a newer commit is pushed to the same branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/smart-traffic-backend
+
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Type-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install lint dependencies
+        run: |
+          pip install --upgrade pip
+          pip install flake8 mypy
+
+      - name: Run flake8 (PEP-8 style)
+        run: |
+          flake8 src/ \
+            --max-line-length=100 \
+            --extend-ignore=E203,W503 \
+            --exclude=__pycache__,.venv
+
+      - name: Run mypy (static type checking)
+        run: |
+          mypy src/ \
+            --ignore-missing-imports \
+            --exclude "src/views"    # Pygame UI; runs locally, not type-checked in CI
+
+
+  # ───────────────────────────────────────────────────────────────────────────
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint   # Only run tests after linting passes.
+
+    # Spin up a MySQL 8 service container that pytest can connect to.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_DB_ROOT_PASSWORD || 'rootpassword' }}
+          MYSQL_DATABASE:      smart_traffic_test
+          MYSQL_USER:          traffic_user
+          MYSQL_PASSWORD:      ${{ secrets.TEST_DB_PASSWORD || 'testpassword' }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # Injected into the process so DatabaseHandler picks it up.
+      DB_HOST:     127.0.0.1
+      DB_PORT:     3306
+      DB_NAME:     smart_traffic_test
+      DB_USER:     traffic_user
+      DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD || 'testpassword' }}
+      # Disable Pygame display so import doesn't fail in headless CI.
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIODRIVER: dummy
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install system dependencies (mysqlclient)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc default-libmysqlclient-dev pkg-config
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Apply database schema
+        run: |
+          mysql -h 127.0.0.1 -u traffic_user -p${{ secrets.TEST_DB_PASSWORD || 'testpassword' }} \
+            smart_traffic_test < schema.sql
+
+      - name: Run pytest
+        run: |
+          pytest tests/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            -v
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+
+  # ───────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test   # Only build after tests pass.
+
+    # Only push the image on direct pushes to `main` (not on PRs).
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # Enable multi-platform builds (optional; remove if not needed).
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to GitHub Container Registry only on pushes to main.
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate semantic image tags.
+      - name: Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+
+      - name: Build (and push on main)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags:   ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Use GitHub Actions cache to speed up layer rebuilds.
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+
+      - name: Image digest
+        run: echo "Pushed image digest → ${{ steps.build.outputs.digest }}"

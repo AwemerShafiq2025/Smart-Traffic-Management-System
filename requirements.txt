@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Smart Traffic Management System – Python Dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+# Pin exact versions for reproducible builds.
+# To upgrade: pip install -U <package> then update the version here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+# ── Web Framework ─────────────────────────────────────────────────────────────
+fastapi==0.115.5               # Core API framework (used by src/api/)
+uvicorn[standard]==0.32.0      # ASGI server; [standard] adds websocket + reload support
+pydantic==2.9.2                # Request/response validation (bundled with FastAPI v2)
+pydantic-settings==2.6.0       # Load settings from .env via BaseSettings
+
+
+# ── Database ──────────────────────────────────────────────────────────────────
+mysqlclient==2.2.4             # C-extension MySQL driver (used by DatabaseHandler)
+SQLAlchemy==2.0.36             # ORM / connection pool (optional but standard with FastAPI + MySQL)
+alembic==1.14.0                # DB migration tool — run `alembic upgrade head` after schema changes
+
+
+# ── Environment / Config ──────────────────────────────────────────────────────
+python-dotenv==1.0.1           # Loads variables from .env into os.environ
+
+
+# ── Pygame (Local simulation UI – NOT installed inside Docker) ────────────────
+# The Dockerfile skips this because the Pygame UI runs on the developer's
+# machine, not in the container.  Install locally with:
+#   pip install pygame==2.6.1
+pygame==2.6.1
+
+
+# ── HTTP Client (optional – useful for inter-service calls or testing) ─────────
+httpx==0.27.2                  # Async HTTP client; also used by FastAPI TestClient
+
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest==8.3.3
+pytest-cov==6.0.0              # Coverage reports (--cov flag in CI pipeline)
+pytest-asyncio==0.24.0         # Async test support for FastAPI async routes
+
+
+# ── Linting / Type-checking (dev only – not needed at runtime) ────────────────
+flake8==7.1.1
+mypy==1.13.0

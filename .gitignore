@@ -1,0 +1,120 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Smart Traffic Management System – .gitignore
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+MANIFEST
+
+# ── Virtual Environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env.local
+.env.*.local
+Pipfile.lock
+poetry.lock        # Keep if you want reproducible builds; delete this line if so.
+
+# ── Environment Variables & Secrets ──────────────────────────────────────────
+# Commit .env.example (the template), never the real .env.
+.env
+.env.production
+.env.staging
+*.secret
+secrets/
+
+# ── Database / XAMPP Local Files ──────────────────────────────────────────────
+*.sql.bak
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+# MySQL dump files
+*.dump
+mysql_data/
+
+# ── IDE & Editors ─────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Testing & Coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+test-results/
+
+# ── Type Checkers ─────────────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+
+# ── Linters ───────────────────────────────────────────────────────────────────
+.ruff_cache/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Keep Dockerfile and docker-compose.yml in version control.
+# Ignore local override and generated files.
+docker-compose.override.yml
+.dockerignore.local
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+log/
+
+# ── OS-specific ───────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+ehthumbs.db
+Desktop.ini
+
+# ── Jupyter Notebooks ─────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Distribution / Packaging ──────────────────────────────────────────────────
+*.tar.gz
+*.zip
+*.whl
+
+# ── Pygame / Local Simulation Artifacts ───────────────────────────────────────
+# Screenshots or recordings saved by the Pygame UI during development.
+screenshots/
+recordings/
+*.png
+*.mp4
+*.avi
+# Exception: keep any intentional assets checked into the repo.
+!assets/**/*.png
